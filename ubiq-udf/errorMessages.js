@@ -1,0 +1,15 @@
+// module.exports = {
+const InvalidAlphabetEmpty = 'invalid argument, alphabet cannot be empty'
+const InvalidCharacter = 'invalid argument, input character not found in alphabet'
+const InvalidInputLength = 'invalid input length'
+const InvalidRadix = 'invalid radix'
+const InvalidSourceLength = 'invalid source length'
+const InvalidTweak = 'invalid tweak'
+const InvalidTweakLength = 'invalid tweak length'
+const KeySize = 'key size error'
+const MaxStringLength = 'string exceeds desired length'
+const MinTextLengthRange = 'minimum text length out of range'
+const NullArrayArgument = 'array can not be null'
+const RadixOutofRange = 'radix value out of range'
+const StringExceeds = 'string exceeds desired length'
+// };

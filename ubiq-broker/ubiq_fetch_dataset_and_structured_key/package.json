@@ -1,0 +1,32 @@
+{
+    "name": "ubiq-bigquery",
+    "version": "1.0.0",
+    "description": "Ubiq Security broker functions for interacting with the Ubiq API from Google Cloud Functions",
+    "main": "index.js",
+    "author": "Ubiq Security, Inc. <support@ubiqsecurity.com> (https://www.ubiqsecurity.com/)",
+    "license": "MIT",
+    "keywords": [
+      "ubiq security",
+      "ubiq",
+      "security",
+      "encryption",
+      "client",
+      "google cloud"
+    ],
+    "scripts": {
+      "start": "npx functions-framework --target=helloHttp --signature-type=http --port 8020",
+      "start-mon": "nodemon --exec npx functions-framework --target=helloHttp --signature-type=http --port 8020",
+      "deploy": "gcloud functions deploy ubiq_fetch_dataset_and_structured_key --gen2 --runtime=nodejs20 --source=. --entry-point=fetch_dataset_and_structured_key --trigger-http",
+      "test": "jest"
+    },
+    "files": [
+      "lib",
+      "index.js"
+    ],
+    "homepage": "https://gitlab.com/ubiqsecurity/ubiq-bigquery",
+    "dependencies": {
+      "node-fetch": "^2.6.0",
+      "node-forge": "^1.3.1",
+      "@google-cloud/functions-framework": "^3.0.0"
+    }
+  }
