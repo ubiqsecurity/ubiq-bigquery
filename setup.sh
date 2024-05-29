@@ -60,7 +60,7 @@ process_events_function="CREATE OR REPLACE FUNCTION \`$gcloud_project_id.$bq_dat
 RETURNS STRING
 LANGUAGE js
 AS r\"\"\"
-    VERSION = '1.0.0'
+    VERSION = '2.2.0'
     const conditions = ['ubiq_encrypt', 'ubiq_decrypt']
     const events = []
 

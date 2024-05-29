@@ -1,6 +1,6 @@
 {
     "name": "ubiq-bigquery",
-    "version": "1.0.0",
+    "version": "2.2.0",
     "description": "Ubiq Security broker functions for interacting with the Ubiq API from Google Cloud Functions",
     "main": "index.js",
     "author": "Ubiq Security, Inc. <support@ubiqsecurity.com> (https://www.ubiqsecurity.com/)",
