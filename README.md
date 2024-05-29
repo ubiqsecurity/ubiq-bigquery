@@ -120,7 +120,7 @@ CREATE OR REPLACE FUNCTION PROJECT_ID.BQ_DATASET.ubiq_process_events(access_key 
 RETURNS STRING
 LANGUAGE js
 AS r"""
-    VERSION = '1.0.0'
+    VERSION = '2.2.0'
     const conditions = ['ubiq_encrypt', 'ubiq_encrypt_for_search', 'ubiq_decrypt']
     const events = []
 

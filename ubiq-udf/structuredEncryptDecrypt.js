@@ -69,12 +69,15 @@ class StructuredEncryptDecrypt {
         }
 
         // Sort by ascending priority
-        rules = [...rules.sort((i, j) => {
-            if(i.priority > j.priority) return 1;
-            if(i.priority > j.priority) return -1;
-            return 0
-        })];
-
+        var ar = []
+        // Create a new array from values
+        for (const rec of rules.values()){
+            ar[rec.priority] = rec;
+        }
+        // Filter out any gaps
+        ar.filter(Boolean)
+        rules = ar.filter(Boolean)
+    
         let trimText = [...strArr];
         const formattedDestination = [];
         for (const [idx, rule] of rules.entries()) {
@@ -83,7 +86,7 @@ class StructuredEncryptDecrypt {
                     const pthTrim = []
                     const setPassthrough = new Set(rule.value.split(''));
 
-                    for (const currentChar of strArr) {
+                    for (const currentChar of trimText) {
                         if (setPassthrough.has(currentChar) === false) {
                             pthTrim.push(currentChar);
                             formattedDestination.push(ocs[0]);
@@ -118,12 +121,9 @@ class StructuredEncryptDecrypt {
 
     FormatOutput(formattedDestination, inputText, pth, rules) {
         let outputText = [...inputText]
-        // Sort by descending priority
-        rules = [...rules.sort((i, j) => {
-            if(i.priority > j.priority) return -1;
-            if(i.priority > j.priority) return 1;
-            return 0
-        })];
+        // Reverse the rules to undo what we've done.
+        rules.reverse();
+
         for (const rule of rules) {
             switch (rule.type) {
                 case "passthrough":
