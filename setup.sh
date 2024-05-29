@@ -1,9 +1,12 @@
-read -p "Google Cloud Region (us, eu): " $gcloud_region
-read -p "Google Cloud Project ID (eg. isometric-dog-01587): " $gcloud_project_id
-read -p "Google Cloud Storage Bucket Name: " $gcloud_bucket_name
-read -p "BigQuery Dataset Name: " $bq_dataset
+# Optional: set $verbose_deploy to see queries being run.
 
-connection_id=ubiq_bigquery
+[[ -z "${gcloud_multi_region}" ]] && read -p "Google Cloud Multi-Region (us, eu): " gcloud_multi_region
+[[ -z "${gcloud_region}" ]] && read -p "Google Cloud Region (us-west2, asia-south1): " gcloud_region
+[[ -z "${gcloud_project_id}" ]] && read -p "Google Cloud Project ID (eg. isometric-dog-01587): " gcloud_project_id
+[[ -z "${gcloud_bucket_name}" ]] && read -p "Google Cloud Storage Bucket Name: " gcloud_bucket_name
+[[ -z "${bq_dataset}" ]] && read -p "BigQuery Dataset Name: " bq_dataset
+
+connection_id="${gcloud_multi_region}.ubiq_bigquery"
 
 # Deploy Key Fetch
 (cd  ubiq-broker/ubiq_fetch_dataset_and_structured_key && gcloud functions deploy ubiq_fetch_dataset_and_structured_key --gen2 --runtime=nodejs20 --source=. --entry-point=ubiq_fetch_dataset_and_structured_key --trigger-http)
@@ -17,43 +20,43 @@ bq mk --connection --location=$gcloud_region --project_id=$gcloud_project_id \
     --connection_type=CLOUD_RESOURCE ubiq_bigquery
 
 # verify
-bq show --connection $gcloud_project_id.$gcloud_region.$connection_id
+bq show --connection $gcloud_project_id.$connection_id
 
-# Connection will need to be set up with IAM Access
-# https://cloud.google.com/bigquery/docs/remote-functions#grant_permission_on_function
+# Prompt user about setting up IAM Permissions.
+echo "Connection will need to be set up with IAM Access before continuing."
+echo "You will need the serviceAccountId (***@***.gserviceaccount.com) from the properties from above."
+echo "https://cloud.google.com/bigquery/docs/remote-functions#grant_permission_on_function"
+
+read -n 1 -s -r -p "Press any key to continue"
 
 # Deploy Remote Functions to BQ
 
 base_url="https://$gcloud_region-$gcloud_project_id.cloudfunctions.net"
 
-fetch_url="$base_url/fetch_dataset_and_structured_key"
-fetch_function="CREATE FUNCTION \`$gcloud_project_id.$bq_dataset.ubiq_fetch_dataset_and_structured_key\`(dataset_names STRING, access_key STRING, secret_signing_key STRING) RETURNS JSON
-REMOTE WITH CONNECTION \`$gcloud_project_id.$gcloud_region.$connection_id\`
+fetch_url="$base_url/ubiq_fetch_dataset_and_structured_key"
+fetch_function="CREATE OR REPLACE FUNCTION \`$gcloud_project_id.$bq_dataset.ubiq_fetch_dataset_and_structured_key\`(dataset_names STRING, access_key STRING, secret_signing_key STRING) RETURNS JSON
+REMOTE WITH CONNECTION \`$gcloud_project_id.$connection_id\`
 OPTIONS (
   endpoint = '$fetch_url'
 );"
 
-bq query --nouse_legacy_sql $fetch_function
 
-decrypt_key_url="$base_url/decrypt_dataset_keys"
-decrypt_key_function="CREATE FUNCTION \`$gcloud_project_id.$bq_dataset.ubiq_decrypt_dataset_keys\`(ubiq_cache JSON, secret_crypto_signing_key STRING) RETURNS JSON
-REMOTE WITH CONNECTION \`$gcloud_project_id.$gcloud_region.$connection_id\`
+decrypt_key_url="$base_url/ubiq_decrypt_dataset_keys"
+decrypt_key_function="CREATE OR REPLACE FUNCTION \`$gcloud_project_id.$bq_dataset.ubiq_decrypt_dataset_keys\`(ubiq_cache JSON, secret_crypto_signing_key STRING) RETURNS JSON
+REMOTE WITH CONNECTION \`$gcloud_project_id.$connection_id\`
 OPTIONS (
   endpoint = '$decrypt_key_url'
 );"
 
-bq query --nouse_legacy_sql $decrypt_key_function
-
-submit_events_url="$base_url/submit_events"
-submit_events_function="CREATE FUNCTION \`$gcloud_project_id.$bq_dataset.ubiq_submit_events_remote\`(access_key STRING, secret_signing_key STRING, events STRING) RETURNS JSON
-REMOTE WITH CONNECTION \`$gcloud_project_id.$gcloud_region.$connection_id\`
+submit_events_url="$base_url/ubiq_submit_events"
+submit_events_function="CREATE OR REPLACE FUNCTION \`$gcloud_project_id.$bq_dataset.ubiq_submit_events_remote\`(access_key STRING, secret_signing_key STRING, events STRING) RETURNS JSON
+REMOTE WITH CONNECTION \`$gcloud_project_id.$connection_id\`
 OPTIONS (
   endpoint = '$submit_events_url'
 );"
 
-bq query --nouse_legacy_sql $submit_events_function
 
-process_events_function="CREATE OR REPLACE FUNCTION $gcloud_project_id.$bq_dataset.ubiq_process_events(access_key STRING, json_events STRING)
+process_events_function="CREATE OR REPLACE FUNCTION \`$gcloud_project_id.$bq_dataset.ubiq_process_events\`(access_key STRING, json_events STRING)
 RETURNS STRING
 LANGUAGE js
 AS r\"\"\"
@@ -120,10 +123,19 @@ AS r\"\"\"
     return JSON.stringify(events)
 \"\"\";"
 
+[[ -z "${verbose_deploy}" ]] && echo $fetch_function
+bq query --nouse_legacy_sql $fetch_function
+
+[[ -z "${verbose_deploy}" ]] && echo $decrypt_key_function;
+bq query --nouse_legacy_sql $decrypt_key_function
+
+[[ -z "${verbose_deploy}" ]] && echo $submit_events_function
+bq query --nouse_legacy_sql $submit_events_function
+
+[[ -z "${verbose_deploy}" ]] && echo $process_events_function
 bq query --nouse_legacy_sql $process_events_function
 
 # Upload Library to Bucket
-
 gcloud storage cp ubiq-udf/* gs://$gcloud_bucket_name
 
 
@@ -169,18 +181,10 @@ AS r\"\"\"
   return Decrypt({cipherText, datasetName, ubiqDatasetKeyCache})
 \"\"\";"
 
-bq query --nouse_legacy_sql $begin_session_sql
-
-bq query --nouse_legacy_sql $encrypt_function_sql
-
-bq query --nouse_legacy_sql $encrypt_for_search_sql
-
-bq query --nouse_legacy_sql $decrypt_function_sql
-
-submit_events_sql="CREATE FUNCTION \`$gcloud_project_id.$bq_dataset.ubiq_submit_events\`(access_key STRING, secret_signing_key STRING)
+submit_events_sql="CREATE OR REPLACE FUNCTION \`$gcloud_project_id.$bq_dataset.ubiq_submit_events\`(access_key STRING, secret_signing_key STRING)
 AS(
     (SELECT \`$gcloud_project_id.$bq_dataset.ubiq_submit_events_remote\`(access_key, secret_signing_key, (SELECT
-        $gcloud_project_id.$bq_dataset.ubiq_process_events(access_key,
+        \`$gcloud_project_id.$bq_dataset.ubiq_process_events\`(access_key,
             (WITH EventsData AS (
                 SELECT
                     start_time,
@@ -209,4 +213,17 @@ AS(
     )
 ));";
 
+[[ -z "${verbose_deploy}" ]] && echo $begin_session_sql
+bq query --nouse_legacy_sql $begin_session_sql
+
+[[ -z "${verbose_deploy}" ]] && echo $encrypt_function_sql
+bq query --nouse_legacy_sql $encrypt_function_sql
+
+[[ -z "${verbose_deploy}" ]] && echo $encrypt_for_search_sql
+bq query --nouse_legacy_sql $encrypt_for_search_sql
+
+[[ -z "${verbose_deploy}" ]] && echo $decrypt_function_sql
+bq query --nouse_legacy_sql $decrypt_function_sql
+
+[[ -z "${verbose_deploy}" ]] && echo $submit_events_sql
 bq query --nouse_legacy_sql $submit_events_sql
