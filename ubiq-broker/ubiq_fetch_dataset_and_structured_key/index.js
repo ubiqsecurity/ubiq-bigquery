@@ -2,7 +2,7 @@ const functions = require('@google-cloud/functions-framework');
 const fetch = require('node-fetch');
 const auth = require('./lib/auth')
 
-functions.http('fetch_dataset_and_structured_key', async (req, res) => {
+functions.http('ubiq_fetch_dataset_and_structured_key', async (req, res) => {
   const calls = req.body.calls
   const replies = []
   const host = `https://api.ubiqsecurity.com`

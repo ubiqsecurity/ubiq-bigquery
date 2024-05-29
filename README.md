@@ -18,8 +18,8 @@ In order to work with the Ubiq API, external functions must be set up within Goo
 3. Submit event information to ubiq for metrics purposes
 
 ```shell
-(cd  ubiq-broker/ubiq_fetch_dataset_and_structured_key && gcloud functions deploy ubiq_fetch_dataset_and_structured_key --gen2 --runtime=nodejs20 --source=. --entry-point=fetch_dataset_and_structured_key --trigger-http)
-(cd  ubiq-broker/ubiq_decrypt_dataset_keys && gcloud functions deploy ubiq_fetch_dataset_and_structured_key --gen2 --runtime=nodejs20 --source=. --entry-point=decrypt_dataset_keys --trigger-http)
+(cd  ubiq-broker/ubiq_fetch_dataset_and_structured_key && gcloud functions deploy ubiq_fetch_dataset_and_structured_key --gen2 --runtime=nodejs20 --source=. --entry-point=ubiq_fetch_dataset_and_structured_key --trigger-http)
+(cd  ubiq-broker/ubiq_decrypt_dataset_keys && gcloud functions deploy ubiq_fetch_dataset_and_structured_key --gen2 --runtime=nodejs20 --source=. --entry-point=ubiq_decrypt_dataset_keys --trigger-http)
 (cd  ubiq-broker/ubiq_submit_events && gcloud functions deploy ubiq_submit_events --gen2 --runtime=nodejs20 --source=. --entry-point=ubiq_submit_events --trigger-http)
 ```
 

@@ -2,7 +2,7 @@ const functions = require('@google-cloud/functions-framework');
 const fetch = require('node-fetch');
 const auth = require('./lib/auth')
 
-functions.http('submit_events', async (req, res) => {
+functions.http('ubiq_submit_events', async (req, res) => {
   const calls = req.body.calls
   const replies = []
   const host = `https://api.ubiqsecurity.com`
