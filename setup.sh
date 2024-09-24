@@ -151,34 +151,34 @@ BEGIN
   );
 END;"
 
-encrypt_function_sql="CREATE OR REPLACE FUNCTION \`$bq_dataset.ubiq_encrypt\`(plainText STRING, datasetName STRING, ubiqDatasetKeyCache JSON)
+encrypt_function_sql="CREATE OR REPLACE FUNCTION \`$bq_dataset.ubiq_encrypt\`(datasetName STRING, plainText STRING, ubiqDatasetKeyCache JSON)
 RETURNS STRING
 LANGUAGE js
 OPTIONS (
   library= ['gs://$gcloud_bucket_name/arrayUtil.js', 'gs://$gcloud_bucket_name/base64-binary.js', 'gs://$gcloud_bucket_name/BigInteger.js','gs://$gcloud_bucket_name/Bn.js','gs://$gcloud_bucket_name/errorMessages.js','gs://$gcloud_bucket_name/FFX.js','gs://$gcloud_bucket_name/FF1.js','gs://$gcloud_bucket_name/structuredEncryptDecrypt.js','gs://$gcloud_bucket_name/strUtils.js','gs://$gcloud_bucket_name/aes-dst-exp.js']
 )
 AS r\"\"\"
-  return Encrypt({plainText, datasetName, ubiqDatasetKeyCache})
+  return Encrypt({datasetName, plainText, ubiqDatasetKeyCache})
 \"\"\";"
 
-encrypt_for_search_sql="CREATE OR REPLACE FUNCTION \`$bq_dataset.ubiq_encrypt_for_search\`(plainText STRING, datasetName STRING, ubiqDatasetKeyCache JSON)
+encrypt_for_search_sql="CREATE OR REPLACE FUNCTION \`$bq_dataset.ubiq_encrypt_for_search\`(datasetName STRING, plainText STRING, ubiqDatasetKeyCache JSON)
 RETURNS ARRAY<STRING>
 LANGUAGE js
 OPTIONS (
   library= ['gs://$gcloud_bucket_name/arrayUtil.js', 'gs://$gcloud_bucket_name/base64-binary.js', 'gs://$gcloud_bucket_name/BigInteger.js','gs://$gcloud_bucket_name/Bn.js','gs://$gcloud_bucket_name/errorMessages.js','gs://$gcloud_bucket_name/FFX.js','gs://$gcloud_bucket_name/FF1.js','gs://$gcloud_bucket_name/structuredEncryptDecrypt.js','gs://$gcloud_bucket_name/strUtils.js','gs://$gcloud_bucket_name/aes-dst-exp.js']
 )
 AS r\"\"\"
-  return EncryptForSearch({plainText, datasetName, ubiqDatasetKeyCache})
+  return EncryptForSearch({datasetName, plainText, ubiqDatasetKeyCache})
 \"\"\";"
 
-decrypt_function_sql="CREATE OR REPLACE FUNCTION \`$bq_dataset.ubiq_decrypt\`(cipherText STRING, datasetName STRING, ubiqDatasetKeyCache JSON)
+decrypt_function_sql="CREATE OR REPLACE FUNCTION \`$bq_dataset.ubiq_decrypt\`(datasetName STRING, cipherText STRING, ubiqDatasetKeyCache JSON)
 RETURNS STRING
 LANGUAGE js
 OPTIONS (
   library= ['gs://$gcloud_bucket_name/arrayUtil.js', 'gs://$gcloud_bucket_name/base64-binary.js', 'gs://$gcloud_bucket_name/BigInteger.js','gs://$gcloud_bucket_name/Bn.js','gs://$gcloud_bucket_name/errorMessages.js','gs://$gcloud_bucket_name/FFX.js','gs://$gcloud_bucket_name/FF1.js','gs://$gcloud_bucket_name/structuredEncryptDecrypt.js','gs://$gcloud_bucket_name/strUtils.js','gs://$gcloud_bucket_name/aes-dst-exp.js']
 )
 AS r\"\"\"
-  return Decrypt({cipherText, datasetName, ubiqDatasetKeyCache})
+  return Decrypt({datasetName, cipherText, ubiqDatasetKeyCache})
 \"\"\";"
 
 submit_events_sql="CREATE OR REPLACE FUNCTION \`$gcloud_project_id.$bq_dataset.ubiq_submit_events\`(access_key STRING, secret_signing_key STRING)
@@ -207,7 +207,7 @@ AS(
                 SELECT
                 CONCAT('[', STRING_AGG(TO_JSON_STRING(t), ','), ']')
                 FROM
-                EventData AS t)
+                EventsData AS t)
             )
         )
     )
