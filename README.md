@@ -80,34 +80,34 @@ END;
 The following queries create the Encrypt and Decrypt functions using the libraries uploaded earlier. Replace `BUCKET_PATH` with the path you uploaded the files to in the previous step.
 
 ```sql
-CREATE OR REPLACE FUNCTION `BQ_DATASET.ubiq_encrypt`(plainText STRING, datasetName STRING, ubiqDatasetKeyCache JSON)
+CREATE OR REPLACE FUNCTION `BQ_DATASET.ubiq_encrypt`(datasetName STRING, plainText STRING, ubiqDatasetKeyCache JSON)
 RETURNS STRING
 LANGUAGE js
 OPTIONS (
   library= ['gs://BUCKET_PATH/arrayUtil.js','gs://BUCKET_PATH/BigInteger.js','gs://BUCKET_PATH/Bn.js','gs://BUCKET_PATH/errorMessages.js','gs://BUCKET_PATH/FFX.js','gs://BUCKET_PATH/FF1.js','gs://BUCKET_PATH/structuredEncryptDecrypt.js','gs://BUCKET_PATH/strUtils.js','gs://BUCKET_PATH/aes-dst-exp.js']
 )
 AS r"""
-  return Encrypt({plainText, datasetName, ubiqDatasetKeyCache})
+  return Encrypt({datasetName, plainText, ubiqDatasetKeyCache})
 """;
 
-CREATE OR REPLACE FUNCTION `BQ_DATASET.ubiq_encryptForSearch`(plainText STRING, datasetName STRING, ubiqDatasetKeyCache JSON)
+CREATE OR REPLACE FUNCTION `BQ_DATASET.ubiq_encryptForSearch`(datasetName STRING, plainText STRING, ubiqDatasetKeyCache JSON)
 RETURNS ARRAY<STRING>
 LANGUAGE js
 OPTIONS (
   library= ['gs://BUCKET_PATH/arrayUtil.js','gs://BUCKET_PATH/BigInteger.js','gs://BUCKET_PATH/Bn.js','gs://BUCKET_PATH/errorMessages.js','gs://BUCKET_PATH/FFX.js','gs://BUCKET_PATH/FF1.js','gs://BUCKET_PATH/structuredEncryptDecrypt.js','gs://BUCKET_PATH/strUtils.js','gs://BUCKET_PATH/aes-dst-exp.js']
 )
 AS r"""
-  return EncryptForSearch({plainText, datasetName, ubiqDatasetKeyCache})
+  return EncryptForSearch({datasetName, plainText, ubiqDatasetKeyCache})
 """;
 
-CREATE OR REPLACE FUNCTION `BQ_DATASET.ubiq_decrypt`(cipherText STRING, datasetName STRING, ubiqDatasetKeyCache JSON)
+CREATE OR REPLACE FUNCTION `BQ_DATASET.ubiq_decrypt`(datasetName STRING, cipherText STRING, ubiqDatasetKeyCache JSON)
 RETURNS STRING
 LANGUAGE js
 OPTIONS (
   library= ['gs://BUCKET_PATH/arrayUtil.js','gs://BUCKET_PATH/BigInteger.js','gs://BUCKET_PATH/Bn.js','gs://BUCKET_PATH/errorMessages.js','gs://BUCKET_PATH/FFX.js','gs://BUCKET_PATH/FF1.js','gs://BUCKET_PATH/structuredEncryptDecrypt.js','gs://BUCKET_PATH/strUtils.js','gs://BUCKET_PATH/aes-dst-exp.js']
 )
 AS r"""
-  return Decrypt({cipherText, datasetName, ubiqDatasetKeyCache})
+  return Decrypt({datasetName, cipherText, ubiqDatasetKeyCache})
 """;
 
 ```
@@ -210,7 +210,7 @@ AS(
                 SELECT
                 CONCAT('[', STRING_AGG(TO_JSON_STRING(t), ','), ']')
                 FROM
-                EventData AS t)
+                EventsData AS t)
             )
         )
     )
@@ -246,8 +246,8 @@ SELECT `BQ_DATASET.ubiq_begin_session`(
 To encrypt:
 ```sql
 SELECT `BQ_DATASET.ubiq_encrypt`(
-    plain_text,
     dataset_name,
+    plain_text,
     (SELECT cache FROM ubiq_cache)
 );
 ```
@@ -255,8 +255,8 @@ SELECT `BQ_DATASET.ubiq_encrypt`(
 To decrypt:
 ```sql
 SELECT `BQ_DATASET.ubiq_encrypt`(
-    plain_text,
     dataset_name,
+    plain_text,
     (SELECT cache FROM ubiq_cache)
 );
 ```
@@ -266,8 +266,8 @@ SELECT `BQ_DATASET.ubiq_encrypt`(
 To Encrypt for Search:
 ```sql
 SELECT `BQ_DATASET.ubiq_encrypt_for_search`(
-    plain_text,
     dataset_name,
+    plain_text,
     (SELECT cache from ubiq_cache)
 );
 ```
@@ -278,11 +278,11 @@ TODO: to run this you must enable session mode
 ```sql
 CALL dataset.ubiq_begin_session("SSN", <access_key>, <secret_signing_key>, <secret_crypto_access_key>);
 
-SELECT name, `dataset.ubiq_decrypt`(email, 'email', (SELECT cache from ubiq_cache)) as email, customer_id FROM customer_data;
+SELECT name, `dataset.ubiq_decrypt`('email', email, (SELECT cache from ubiq_cache)) as email, customer_id FROM customer_data;
 
 
 INSERT INTO `dataset.customer_data` (customer_id, name, sensitive_field,) VALUES (
-    1, 'Sam Watkins', `dataset.ubiq_encrypt`(<sensitive_data>, 'alpha_num', (SELECT cache from ubiq_cache))
+    1, 'Sam Watkins', `dataset.ubiq_encrypt`('alpha_num', <sensitive_data>, (SELECT cache from ubiq_cache))
 );
 
 SELECT `dataset.ubiq_submit_events`( <access_key>, <secret_signing_key>);

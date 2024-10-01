@@ -222,7 +222,7 @@ class StructuredEncryptDecrypt {
     }
 }
 
-async function Decrypt({ cipherText, datasetName, ubiqDatasetKeyCache }) {
+async function Decrypt({datasetName, cipherText, ubiqDatasetKeyCache }) {
     var ubiqEncryptDecrypt;
     try {
         ubiqEncryptDecrypt = new StructuredEncryptDecrypt({ datasetName, ubiqDatasetKeyCache });
@@ -250,7 +250,7 @@ async function Decrypt({ cipherText, datasetName, ubiqDatasetKeyCache }) {
     return plainText;
 }
 
-async function Encrypt({ plainText, datasetName, ubiqDatasetKeyCache }) {
+async function Encrypt({ datasetName, plainText, ubiqDatasetKeyCache }) {
     var ubiqEncryptDecrypt;
     try {
         ubiqEncryptDecrypt = new StructuredEncryptDecrypt({ datasetName, ubiqDatasetKeyCache });
@@ -277,7 +277,7 @@ async function Encrypt({ plainText, datasetName, ubiqDatasetKeyCache }) {
     return cipherText;
 }
 
-async function EncryptForSearch({ plainText, datasetName, ubiqDatasetKeyCache }) {
+async function EncryptForSearch({ datasetName, plainText, ubiqDatasetKeyCache }) {
     var ubiqEncryptDecrypt;
     try {
         ubiqEncryptDecrypt = new StructuredEncryptDecrypt({ datasetName, ubiqDatasetKeyCache });
