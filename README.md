@@ -254,9 +254,9 @@ SELECT `BQ_DATASET.ubiq_encrypt`(
 
 To decrypt:
 ```sql
-SELECT `BQ_DATASET.ubiq_encrypt`(
+SELECT `BQ_DATASET.ubiq_decrypt`(
     dataset_name,
-    plain_text,
+    cipher_text,
     (SELECT cache FROM ubiq_cache)
 );
 ```
@@ -287,6 +287,23 @@ INSERT INTO `dataset.customer_data` (customer_id, name, sensitive_field,) VALUES
 
 SELECT `dataset.ubiq_submit_events`( <access_key>, <secret_signing_key>);
 ```
+
+# IDP Authentication
+
+Enterprise customers who use an IDP with Google Big Query can set up an alternate way to encrypt/decrypt data. Once users & datasets have been provisioned through your IDP, you can use a different method to authenticate and retrieve datasets and keys in BigQuery.
+
+A shell script containing setup for relevant SQL & Broker functions has been included. See `idp_setup.sh`. Ensure you have [Google Cloud CLI](https://cloud.google.com/sdk/docs/quickstart) installed first and authenticated. You will need to provide information for it to function properly.
+
+Please contact Ubiq Support for more detail.
+
+**Secret Manager Values needed**
+- **IDP Private Key** - To authenticate, a Public/Private keypair will need to be generated. This can either be made in IDP Settings as part of the Account Settings on the Ubiq Dashboard, or by contacting Ubiq Support and providing the Public Key. The Private key will be used to sign requests made to the Ubiq API. (Ubiq will use the Public key to verify.)
+
+**ENV Variables needed**
+- **IDP_CUSTOMER_ID** - Customer ID provided by Ubiq for SSO Authentication
+- **IDP_PRIVATE_KEY_PATH** - Store the Private Key in Google Secrets Manager. Expose it to the cloud function as a volume. This should contain the path to access that volume/file.
+
+
 
 ## Ubiq API Error Reference
 
