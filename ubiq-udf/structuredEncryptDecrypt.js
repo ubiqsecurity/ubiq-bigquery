@@ -37,8 +37,8 @@ class StructuredEncryptDecrypt {
     }
 
     async GetFF1(ffs, keyNumber) {
-        const unwrapped_data_key = this.cache.keys[this.cache.current_key_number]
-        const activeKey = this.cache.current_key_number
+        const unwrapped_data_key = this.cache.keys[keyNumber]
+        const activeKey = keyNumber
 
         return this.AddFF1(ffs, unwrapped_data_key, keyNumber, activeKey);
     }
@@ -154,7 +154,7 @@ class StructuredEncryptDecrypt {
 
     async EncryptAsync(plainText, tweak) {
         // active key will be used during decryption
-        const { ctx, activeKey } = await this.GetFF1(this.ffs, null);
+        const { ctx, activeKey } = await this.GetFF1(this.ffs, this.cache.current_key_number);
 
         var x = await this.EncryptAsyncKeyNumber(ctx, this.ffs, plainText, tweak, activeKey);
         return x

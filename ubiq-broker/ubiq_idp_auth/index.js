@@ -5,11 +5,11 @@ const forge = require('node-forge');
 const fs = require('fs');
 const auth = require('./lib/auth')
 
-const UBIQ_HOST = `https://api.ubiqsecurity.com`
+const UBIQ_HOST = process.env.UBIQ_HOST ?? `https://api.ubiqsecurity.com`
 const API_V3_ROOT = `api/v3`
 const API_V0_ROOT = `api/v0`
-const idp_customer_id = process.env.idp_customer_id
-const idp_private_key_path = process.env.idp_private_key_path
+const idp_customer_id = process.env.IDP_CUSTOMER_ID
+const idp_private_key_path = process.env.IDP_PRIVATE_KEY_PATH
 
 async function generateKeyPair() {
   const { publicKey, privateKey } = await crypto.generateKeyPairSync('rsa', {
@@ -100,7 +100,29 @@ async function decryptDataKeys(privateKey, keyDefs) {
   return keyDefs
 }
 
+function handleError(res, error, type = "UBIQ"){
+  res.status(500).send(`[${type}] An error occured. ${error}`)
+}
+
+function handleException(res, ex, type = "UBIQ"){
+  res.status(500).send(`[${type}] An error occured. ${ex.name}\n${ex.message}\n${ex.stack}`)
+}
+
 functions.http('ubiq_idp_auth', async (req, res) => {
+  if (idp_customer_id == null) {
+    handleError(res, "Env Variable IDP_CUSTOMER_ID is not set.", "IDP Auth")
+    return
+  }
+  if (idp_private_key_path == null) {
+    handleError(res, "Env Variable IDP_PRIVATE_KEY_PATH is not set.", "IDP Auth")
+    return
+  } else {
+    if(!fs.existsSync(idp_private_key_path)){
+      handleError(res, "IDP_PRIVATE_KEY_PATH either is incorrect or not mounted. Please check your CloudRun settings.", "IDP Auth")
+      return
+    }
+  }
+
   const calls = req.body.calls
   const replies = []
 
@@ -115,7 +137,7 @@ functions.http('ubiq_idp_auth', async (req, res) => {
       const access_token = jwt.sign({
         email: req.body.sessionUser,
         caller: req.body.caller,
-        google_jwt: calls.headers.authorization,
+        google_jwt: req.headers.Authorization,
         issuer: 'Ubiq'
       }, jwtPrivateKey, {
         algorithm: 'RS256',
@@ -153,7 +175,7 @@ functions.http('ubiq_idp_auth', async (req, res) => {
       const [dataset_names] = call
       const full_endpoint = `/${API_V0_ROOT}/fpe/def_keys?papi=${encodeURIComponent(access_key_id)}&ffs_name=${encodeURIComponent(dataset_names)}&payload_cert=${idp_cert_base64}`;
       const url = `${UBIQ_HOST}${full_endpoint}`
-      const req_headers = auth.headers(access_key_id, secret_signing_key, full_endpoint, null, host, 'get');
+      const req_headers = auth.headers(access_key_id, secret_signing_key, full_endpoint, null, UBIQ_HOST, 'get');
       const params = {
         headers: req_headers,
         method: 'GET'
@@ -166,11 +188,11 @@ functions.http('ubiq_idp_auth', async (req, res) => {
         replies.push(decryptedKeys)
       } else {
         const message = await response.text()
-        res.send(`[UBIQ] An error occured. ${e.name}\n${e.message}\n${e.stack}`)
+        handleError(res, `An error occured: "${message}"`)
         return
       }
     } catch (e) {
-      res.send(`[UBIQ] An error occured. ${e.name}\n${e.message}\n${e.stack}`)
+      handleException(res, e)
       return
     }
   }
