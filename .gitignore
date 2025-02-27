@@ -1,1 +1,8 @@
 .DS_STORE
+node_modules/
+.vscode/
+.project
+example/package-lock.json
+.env
+credentials
+*.cpuprofile

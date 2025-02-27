@@ -304,6 +304,29 @@ Please contact Ubiq Support for more detail.
 - **IDP_PRIVATE_KEY_PATH** - Store the Private Key in Google Secrets Manager. Expose it to the cloud function as a volume. This should contain the path to access that volume/file.
 
 
+### Mounting IDP Secret Key (Google Cloud)
+Mounting the IDP Secret Key is more secure than just setting the key as an environment variable. Environment variables are set at startup, so any changes would require a redeploy. Setting as a volume ensures the latest value is always used. For more information, see [Google's documentation](https://cloud.google.com/run/docs/configuring/services/secrets).
+
+1. Ensure you have the [Secret Manager API](https://console.cloud.google.com/security/secret-manager) enabled.
+1. Create a new Secret
+    - Name it something reasonable, eg. `idp_private_key`
+    - Generate the IDP Key Pair from the Ubiq Dashboard. ( [Profile](https://dashboard-dev.ubiqsecurity.com/#/profile) => IDP Integration => Generate Keypair)
+1. Go to CloudRun function settings (ubiq-idp-auth)
+1. Edit & Deploy New Revision at the top
+    1. Click Volumes tab
+        1. Add new Volume
+        1. Volume Type: Secret
+        1. Choose a volume name, eg. `idp_private_key` and set Secret to the secret created in Step 2.
+    1. Containers Tab -> Volume Mounts
+        1. Select the volume made in the previous step
+        1. Set the mount path ie `idp`
+        1. Note the final mount path eg. `/idp/idp_private_key`
+    1. Containers Tab -> Variables & Secrets
+        1. IDP_CUSTOMER_ID - Customer ID provided by Ubiq
+        1. IDP_PRIVATE_KEY_PATH - The mount path from the Volume Mounts step
+1. Deploy
+
+
 
 ## Ubiq API Error Reference
 
